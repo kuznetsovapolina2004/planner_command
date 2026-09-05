@@ -570,11 +570,6 @@ if ($success || $error) {
             <div class="tab-content active" id="overview-tab">
                 <div class="stats-grid">
                     <div class="stat-card">
-                        <i class="fas fa-tasks"></i>
-                        <h3>0</h3>
-                        <p>Выполнено задач</p>
-                    </div>
-                    <div class="stat-card">
                         <i class="fas fa-star"></i>
                         <h3><?php echo $userData['daily_limit'] ?? 15; ?></h3>
                         <p>Дневной лимит</p>

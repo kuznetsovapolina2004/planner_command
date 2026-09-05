@@ -1,3 +1,66 @@
+<?php
+session_start();
+require_once 'bd.php';
+
+// Проверяем авторизацию
+if (!isset($_SESSION['user_id']) || !isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
+    header('Location: index.php');
+    exit;
+}
+
+$user_id = $_SESSION['user_id'];
+
+// Получаем информацию о пользователе
+$sql = "SELECT * FROM users WHERE id = $user_id";
+$result = mysqli_query($bd, $sql);
+$userData = mysqli_fetch_assoc($result);
+
+// Получаем энергозатратность задач
+$energyData = [];
+$energy_sql = "SELECT task_type, energy_level FROM user_task_energy WHERE user_id = $user_id";
+$energy_result = mysqli_query($bd, $energy_sql);
+while ($row = mysqli_fetch_assoc($energy_result)) {
+    $energyData[$row['task_type']] = $row['energy_level'];
+}
+
+// Получаем расписание работы
+$workSchedule = [];
+$work_sql = "SELECT * FROM user_work_schedule WHERE user_id = $user_id";
+$work_result = mysqli_query($bd, $work_sql);
+while ($row = mysqli_fetch_assoc($work_result)) {
+    $workSchedule[$row['day_of_week']] = [
+        'start_time' => $row['start_time'],
+        'end_time' => $row['end_time']
+    ];
+}
+
+// Получаем расписание учебы
+$studySchedule = [];
+$study_sql = "SELECT * FROM user_study_schedule WHERE user_id = $user_id";
+$study_result = mysqli_query($bd, $study_sql);
+while ($row = mysqli_fetch_assoc($study_result)) {
+    $studySchedule[$row['day_of_week']] = [
+        'start_time' => $row['start_time'],
+        'end_time' => $row['end_time']
+    ];
+}
+
+// Получаем фиксированные задачи
+$fixedTasks = [];
+$tasks_sql = "SELECT * FROM user_fixed_tasks WHERE user_id = $user_id";
+$tasks_result = mysqli_query($bd, $tasks_sql);
+while ($row = mysqli_fetch_assoc($tasks_result)) {
+    $fixedTasks[] = [
+        'day_of_week' => $row['day_of_week'],
+        'start_time' => $row['start_time'],
+        'end_time' => $row['end_time'],
+        'description' => $row['description']
+    ];
+}
+
+// Получаем лимит пользователя
+$daily_limit = $userData['daily_limit'] ?? 15;
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -92,70 +155,6 @@
     </style>
 </head>
 <body>
-<?php
-session_start();
-require_once 'bd.php';
-
-// Проверяем авторизацию
-if (!isset($_SESSION['user_id']) || !isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
-    header('Location: index.php');
-    exit;
-}
-
-$user_id = $_SESSION['user_id'];
-
-// Получаем информацию о пользователе
-$sql = "SELECT * FROM users WHERE id = $user_id";
-$result = mysqli_query($bd, $sql);
-$userData = mysqli_fetch_assoc($result);
-
-// Получаем энергозатратность задач
-$energyData = [];
-$energy_sql = "SELECT task_type, energy_level FROM user_task_energy WHERE user_id = $user_id";
-$energy_result = mysqli_query($bd, $energy_sql);
-while ($row = mysqli_fetch_assoc($energy_result)) {
-    $energyData[$row['task_type']] = $row['energy_level'];
-}
-
-// Получаем расписание работы
-$workSchedule = [];
-$work_sql = "SELECT * FROM user_work_schedule WHERE user_id = $user_id";
-$work_result = mysqli_query($bd, $work_sql);
-while ($row = mysqli_fetch_assoc($work_result)) {
-    $workSchedule[$row['day_of_week']] = [
-        'start_time' => $row['start_time'],
-        'end_time' => $row['end_time']
-    ];
-}
-
-// Получаем расписание учебы
-$studySchedule = [];
-$study_sql = "SELECT * FROM user_study_schedule WHERE user_id = $user_id";
-$study_result = mysqli_query($bd, $study_sql);
-while ($row = mysqli_fetch_assoc($study_result)) {
-    $studySchedule[$row['day_of_week']] = [
-        'start_time' => $row['start_time'],
-        'end_time' => $row['end_time']
-    ];
-}
-
-// Получаем фиксированные задачи
-$fixedTasks = [];
-$tasks_sql = "SELECT * FROM user_fixed_tasks WHERE user_id = $user_id";
-$tasks_result = mysqli_query($bd, $tasks_sql);
-while ($row = mysqli_fetch_assoc($tasks_result)) {
-    $fixedTasks[] = [
-        'day_of_week' => $row['day_of_week'],
-        'start_time' => $row['start_time'],
-        'end_time' => $row['end_time'],
-        'description' => $row['description']
-    ];
-}
-
-// Получаем лимит пользователя
-$daily_limit = $userData['daily_limit'] ?? 15;
-?>
-
     <!-- Верхняя панель навигации -->
     <header class="header">
         <div class="header-left">
